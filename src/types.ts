@@ -387,6 +387,61 @@ export interface BirthdayEventNote {
   lastUpdated?: string;
 }
 
+// สถานะรายการในเช็คลิสต์เอกสาร HR ของพนักงานแต่ละคน
+export interface HrChecklistEntry {
+  done: boolean;
+  doneAt?: string; // YYYY-MM-DD
+  note?: string;
+}
+
+// ==========================================
+// คลังเอกสาร: เทมเพลต .docx และประวัติการสร้างเอกสาร
+// ==========================================
+export type DocTemplateCategory =
+  | 'ONBOARDING' // เอกสารรับเข้าทำงาน
+  | 'CONTRACT' // สัญญา / ข้อตกลง
+  | 'CERTIFICATE' // หนังสือรับรอง
+  | 'EMPLOYMENT' // ระหว่างการจ้างงาน (เตือน, ปรับตำแหน่ง ฯลฯ)
+  | 'OFFBOARDING' // ออกจากงาน
+  | 'OTHER';
+
+export const DOC_TEMPLATE_CATEGORY_LABELS: Record<DocTemplateCategory, string> = {
+  ONBOARDING: 'รับเข้าทำงาน',
+  CONTRACT: 'สัญญา / ข้อตกลง',
+  CERTIFICATE: 'หนังสือรับรอง',
+  EMPLOYMENT: 'ระหว่างจ้างงาน',
+  OFFBOARDING: 'ออกจากงาน',
+  OTHER: 'อื่น ๆ',
+};
+
+export interface DocTemplate {
+  id: string;
+  userId?: string;
+  name: string; // ชื่อเทมเพลต เช่น สัญญาจ้างงาน
+  code?: string; // รหัสเอกสารภายใน เช่น HR-ON-03
+  category: DocTemplateCategory;
+  checklistKey?: string; // ผูกกับรายการในเช็คลิสต์ (รหัสเดียวกับ hrChecklist) เพื่อติ๊กอัตโนมัติเมื่อสร้างเอกสาร
+  fileName: string;
+  fileSize: number; // bytes
+  contentBase64: string; // เนื้อไฟล์ .docx เข้ารหัส base64
+  placeholders: string[]; // ตัวแปรที่พบในเทมเพลต เช่น ['full_name', 'salary']
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface GeneratedDocumentRecord {
+  id: string;
+  userId?: string;
+  templateId: string;
+  templateName: string;
+  checklistKey?: string;
+  employeeId: string;
+  employeeName: string;
+  fileName: string;
+  generatedAt: string; // ISO
+  generatedBy?: string;
+}
+
 export interface Employee {
   // ส่วนที่ 1: ข้อมูลพนักงานทั่วไป
   id: string; // รหัสพนักงาน เช่น EMP-001
@@ -424,6 +479,9 @@ export interface Employee {
 
   // เช็คลิสต์เอกสารสำคัญของพนักงาน (สำเนาบัตร, ทะเบียนบ้าน, รูปถ่าย, เรซูเม่, การศึกษา ฯลฯ)
   documentChecklist?: EmployeeDocumentChecklist;
+
+  // เช็คลิสต์เอกสาร HR ที่ต้องมีต่อพนักงาน (คีย์ = รหัสเอกสาร เช่น HR-ON-03) ดู data/hrChecklist.ts
+  hrChecklist?: Record<string, HrChecklistEntry>;
 
   // ส่วนที่ 2: ข้อมูลแรงงานต่างด้าว (เปิดเมื่อ isForeignWorker = true)
   foreignDetails?: ForeignWorkerDetails;
@@ -492,7 +550,7 @@ export interface PayrollCalculation {
   waivedLateMinutes?: number; // นาทีสายที่อนุมัติยกเว้นไม่หักเงิน
   billableLateMinutes?: number; // นาทีสายที่นำมาคิดหักเงิน (เกิน 30 นาที)
   lateDeduction: number; // หักมาสาย (นาทีละ 10 บาท สำหรับส่วนเกิน 30 นาที)
-  socialSecurity: number; // ประกันสังคม (5% สูงสุด 750)
+  socialSecurity: number; // ประกันสังคมส่วนลูกจ้าง (5% ของฐาน 1,650 - เพดานตามปี ดู utils/socialSecurity.ts)
   taxWithheld: number; // ภาษีหัก ณ ที่จ่าย
   otherDeduction: number;
   totalDeductions: number;

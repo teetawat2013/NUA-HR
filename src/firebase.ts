@@ -18,7 +18,7 @@ import {
   query,
 } from 'firebase/firestore';
 import firebaseConfig from '../firebase-applet-config.json';
-import { Employee, AttendanceRecord, ReportHistoryItem, LatePermissionRequest, JobApplication, JobApplicationSettings } from './types';
+import { Employee, AttendanceRecord, ReportHistoryItem, LatePermissionRequest, JobApplication, JobApplicationSettings, DocTemplate, GeneratedDocumentRecord } from './types';
 
 // Initialize Firebase App and Firestore
 const app = initializeApp(firebaseConfig);
@@ -340,6 +340,102 @@ export async function deleteLateRequestFromFirestore(userId: string, reqId: stri
 }
 
 // Purge all demo records from Firestore collections for the user
+// ===== คลังเอกสาร: เทมเพลต .docx =====
+export function subscribeDocTemplates(
+  userId: string,
+  onData: (templates: DocTemplate[]) => void,
+  onError?: (err: Error) => void
+) {
+  const collPath = `users/${userId}/doc_templates`;
+  const q = query(collection(db, collPath));
+
+  return onSnapshot(
+    q,
+    (snapshot) => {
+      const list: DocTemplate[] = [];
+      snapshot.forEach((docSnap) => {
+        list.push(docSnap.data() as DocTemplate);
+      });
+      list.sort((a, b) => (a.code || a.name).localeCompare(b.code || b.name, 'th'));
+      onData(list);
+    },
+    (error) => {
+      try {
+        handleFirestoreError(error, OperationType.LIST, collPath);
+      } catch (e) {
+        if (onError) onError(e as Error);
+      }
+    }
+  );
+}
+
+export async function saveDocTemplateToFirestore(userId: string, template: DocTemplate): Promise<void> {
+  const path = `users/${userId}/doc_templates/${template.id}`;
+  try {
+    const cleaned = cleanForFirestore({ ...template, userId });
+    await setDoc(doc(db, 'users', userId, 'doc_templates', template.id), cleaned, { merge: true });
+  } catch (error) {
+    handleFirestoreError(error, OperationType.WRITE, path);
+  }
+}
+
+export async function deleteDocTemplateFromFirestore(userId: string, templateId: string): Promise<void> {
+  const path = `users/${userId}/doc_templates/${templateId}`;
+  try {
+    await deleteDoc(doc(db, 'users', userId, 'doc_templates', templateId));
+  } catch (error) {
+    handleFirestoreError(error, OperationType.DELETE, path);
+  }
+}
+
+// ===== คลังเอกสาร: ประวัติการสร้างเอกสาร (เก็บเฉพาะข้อมูลอ้างอิง ไม่เก็บไฟล์) =====
+export function subscribeGeneratedDocs(
+  userId: string,
+  onData: (records: GeneratedDocumentRecord[]) => void,
+  onError?: (err: Error) => void
+) {
+  const collPath = `users/${userId}/generated_documents`;
+  const q = query(collection(db, collPath));
+
+  return onSnapshot(
+    q,
+    (snapshot) => {
+      const list: GeneratedDocumentRecord[] = [];
+      snapshot.forEach((docSnap) => {
+        list.push(docSnap.data() as GeneratedDocumentRecord);
+      });
+      list.sort((a, b) => new Date(b.generatedAt).getTime() - new Date(a.generatedAt).getTime());
+      onData(list);
+    },
+    (error) => {
+      try {
+        handleFirestoreError(error, OperationType.LIST, collPath);
+      } catch (e) {
+        if (onError) onError(e as Error);
+      }
+    }
+  );
+}
+
+export async function saveGeneratedDocToFirestore(userId: string, record: GeneratedDocumentRecord): Promise<void> {
+  const path = `users/${userId}/generated_documents/${record.id}`;
+  try {
+    const cleaned = cleanForFirestore({ ...record, userId });
+    await setDoc(doc(db, 'users', userId, 'generated_documents', record.id), cleaned, { merge: true });
+  } catch (error) {
+    handleFirestoreError(error, OperationType.WRITE, path);
+  }
+}
+
+export async function deleteGeneratedDocFromFirestore(userId: string, recordId: string): Promise<void> {
+  const path = `users/${userId}/generated_documents/${recordId}`;
+  try {
+    await deleteDoc(doc(db, 'users', userId, 'generated_documents', recordId));
+  } catch (error) {
+    handleFirestoreError(error, OperationType.DELETE, path);
+  }
+}
+
 export async function purgeAllDemoDataFromFirestore(userId: string): Promise<void> {
   const demoEmpIds = ['EMP-001', 'EMP-002', 'EMP-003', 'EMP-004', 'EMP-005', 'EMP-006'];
   const demoAttIds = ['ATT-001', 'ATT-002', 'ATT-003', 'ATT-004', 'ATT-005', 'ATT-006', 'ATT-007', 'ATT-008'];

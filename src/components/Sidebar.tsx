@@ -11,7 +11,8 @@ import {
   BellRing, 
   CalendarDays,
   UserPlus,
-  FileSignature
+  FileSignature,
+  BookOpen
 } from 'lucide-react';
 
 export type NavTab = 
@@ -22,6 +23,7 @@ export type NavTab =
   | 'calendar'
   | 'payroll'
   | 'contracts'
+  | 'documents'
   | 'recruitment'
   | 'resigned'
   | 'report';
@@ -106,6 +108,12 @@ export const Sidebar: React.FC<SidebarProps> = ({
       icon: DollarSign,
       badge: 'Auto',
       badgeColor: 'bg-emerald-50 text-emerald-700 font-semibold',
+    },
+    {
+      id: 'documents' as NavTab,
+      label: 'คลังเอกสาร',
+      sub: 'เทมเพลต Word เติมข้อมูลพนักงาน',
+      icon: BookOpen,
     },
     {
       id: 'recruitment' as NavTab,
