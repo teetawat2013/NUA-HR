@@ -28,10 +28,12 @@ import {
   QrCode,
   History,
   FileCheck,
+  ClipboardCheck,
   Cake,
   ArrowRight
 } from 'lucide-react';
-import { Employee, WorkerDocument, AttendanceRecord } from '../types';
+import { Employee, WorkerDocument, AttendanceRecord, DocTemplate, GeneratedDocumentRecord, EmploymentContract } from '../types';
+import { EmployeeHrChecklist } from './EmployeeHrChecklist';
 import { calculateEmployeePayroll, formatCurrency, getExpiryStatus, THAI_MONTHS } from '../utils/payrollCalculator';
 import { showConfirmDialog, showToast } from '../utils/swal';
 import { EmployeeQRCodeSection } from './EmployeeQRCodeSection';
@@ -47,6 +49,10 @@ interface EmployeeDetailModalProps {
   onResignToggle: (employee: Employee) => void;
   onUpdateEmployee?: (updated: Employee) => void;
   onOpenQuickAttendanceForm?: (employee: Employee) => void;
+  docTemplates?: DocTemplate[];
+  generatedDocs?: GeneratedDocumentRecord[];
+  contracts?: EmploymentContract[];
+  onGenerateFromTemplate?: (templateId: string, employeeId: string) => void;
 }
 
 export const EmployeeDetailModal: React.FC<EmployeeDetailModalProps> = ({
@@ -58,8 +64,12 @@ export const EmployeeDetailModal: React.FC<EmployeeDetailModalProps> = ({
   onResignToggle,
   onUpdateEmployee,
   onOpenQuickAttendanceForm,
+  docTemplates = [],
+  generatedDocs = [],
+  contracts = [],
+  onGenerateFromTemplate,
 }) => {
-  const [activeTab, setActiveTab] = useState<'info' | 'foreign' | 'documents' | 'attendance' | 'timeline' | 'warnings' | 'qrcode'>('info');
+  const [activeTab, setActiveTab] = useState<'info' | 'foreign' | 'documents' | 'attendance' | 'timeline' | 'warnings' | 'qrcode' | 'checklist'>('info');
   const [previewImageModal, setPreviewImageModal] = useState<{ url: string; title: string } | null>(null);
   const [isPrintModalOpen, setIsPrintModalOpen] = useState(false);
 
@@ -286,6 +296,18 @@ export const EmployeeDetailModal: React.FC<EmployeeDetailModalProps> = ({
             <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-slate-200 text-slate-700">
               {allDocuments.length}
             </span>
+          </button>
+
+          <button
+            onClick={() => setActiveTab('checklist')}
+            className={`py-3 px-3 text-xs sm:text-sm font-semibold border-b-2 whitespace-nowrap transition flex items-center gap-1.5 ${
+              activeTab === 'checklist'
+                ? 'border-emerald-600 text-emerald-700 bg-white shadow-2xs rounded-t-lg font-bold'
+                : 'border-transparent text-slate-600 hover:text-slate-900'
+            }`}
+          >
+            <ClipboardCheck className="w-3.5 h-3.5 text-emerald-600" />
+            <span>เช็คลิสต์เอกสาร & ประกันสังคม</span>
           </button>
 
           <button
@@ -1058,6 +1080,17 @@ export const EmployeeDetailModal: React.FC<EmployeeDetailModalProps> = ({
                 </div>
               )}
             </div>
+          )}
+
+          {activeTab === 'checklist' && (
+            <EmployeeHrChecklist
+              employee={employee}
+              templates={docTemplates}
+              generatedDocs={generatedDocs}
+              contracts={contracts}
+              onUpdateEmployee={onUpdateEmployee}
+              onGenerateFromTemplate={onGenerateFromTemplate}
+            />
           )}
 
           {/* TAB 6: บัตรประจำตัว & QR Code บันทึกเวลา */}

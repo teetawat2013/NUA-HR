@@ -7,6 +7,11 @@ import {
   subscribeEmployees, 
   subscribeAttendanceRecords, 
   subscribeReportHistory,
+  subscribeDocTemplates,
+  saveDocTemplateToFirestore,
+  deleteDocTemplateFromFirestore,
+  subscribeGeneratedDocs,
+  saveGeneratedDocToFirestore,
   saveEmployeeToFirestore, 
   saveAttendanceRecordToFirestore, 
   saveReportHistoryToFirestore,
@@ -36,6 +41,7 @@ import { UrgentExpiryModal } from './components/UrgentExpiryModal';
 import { RecruitmentView } from './components/RecruitmentView';
 import { PublicJobApplicationView } from './components/PublicJobApplicationView';
 import { EmploymentContractsView } from './components/EmploymentContractsView';
+import { DocumentLibraryView } from './components/DocumentLibraryView';
 import { 
   Employee, 
   AttendanceRecord, 
@@ -48,7 +54,9 @@ import {
   DEFAULT_JOB_SETTINGS,
   EmploymentContract,
   ContractSettings,
-  DEFAULT_CONTRACT_SETTINGS
+  DEFAULT_CONTRACT_SETTINGS,
+  DocTemplate,
+  GeneratedDocumentRecord
 } from './types';
 import { 
   getStoredEmployees, 
@@ -65,6 +73,10 @@ import {
   saveEmploymentContracts,
   loadContractSettings,
   saveContractSettings,
+  loadDocTemplates,
+  saveDocTemplates,
+  loadGeneratedDocs,
+  saveGeneratedDocs,
   clearAllData,
   DEMO_EMPLOYEE_IDS,
   DEMO_ATTENDANCE_IDS,
@@ -96,6 +108,10 @@ export default function App() {
   const [reportHistory, setReportHistory] = useState<ReportHistoryItem[]>(() => {
     return getStoredReportHistory().filter(h => !DEMO_REPORT_IDS.includes(h.id));
   });
+
+  const [docTemplates, setDocTemplates] = useState<DocTemplate[]>(() => loadDocTemplates());
+  const [generatedDocs, setGeneratedDocs] = useState<GeneratedDocumentRecord[]>(() => loadGeneratedDocs());
+  const [docPreselect, setDocPreselect] = useState<{ templateId: string; employeeId: string } | null>(null);
 
   // Public Apply Portal Mode State (checked from URL param ?page=apply, ?apply=true, #apply, or /apply)
   const [isPublicApplyMode, setIsPublicApplyMode] = useState<boolean>(() => {
@@ -303,10 +319,30 @@ export default function App() {
       }
     );
 
+    const unsubTpl = subscribeDocTemplates(
+      currentUser.uid,
+      (cloud: DocTemplate[]) => {
+        setDocTemplates(cloud);
+        saveDocTemplates(cloud);
+      },
+      (err: Error) => console.error('Firestore doc templates subscription error:', err)
+    );
+
+    const unsubGen = subscribeGeneratedDocs(
+      currentUser.uid,
+      (cloud: GeneratedDocumentRecord[]) => {
+        setGeneratedDocs(cloud);
+        saveGeneratedDocs(cloud);
+      },
+      (err: Error) => console.error('Firestore generated docs subscription error:', err)
+    );
+
     return () => {
       unsubEmp();
       unsubAtt();
       unsubHist();
+      unsubTpl();
+      unsubGen();
     };
   }, [currentUser]);
 
@@ -970,6 +1006,50 @@ export default function App() {
     }
   };
 
+  // Document Library Handlers
+  const handleSaveDocTemplate = async (tpl: DocTemplate): Promise<boolean> => {
+    if (currentUser) {
+      try {
+        await saveDocTemplateToFirestore(currentUser.uid, tpl);
+      } catch (err) {
+        console.error('Failed to sync template to Firestore:', err);
+        return false;
+      }
+    }
+    const updated = [tpl, ...docTemplates.filter(t => t.id !== tpl.id)];
+    setDocTemplates(updated);
+    // ถ้า localStorage เต็ม ก็ยังใช้งานได้เพราะข้อมูลหลักอยู่ที่ Firestore เมื่อล็อกอิน
+    const savedLocal = saveDocTemplates(updated);
+    return currentUser ? true : savedLocal;
+  };
+
+  const handleDeleteDocTemplate = async (id: string) => {
+    const updated = docTemplates.filter(t => t.id !== id);
+    setDocTemplates(updated);
+    saveDocTemplates(updated);
+    if (currentUser) {
+      try {
+        await deleteDocTemplateFromFirestore(currentUser.uid, id);
+      } catch (err) {
+        console.error('Failed to delete template from Firestore:', err);
+      }
+    }
+  };
+
+  const handleRecordGeneratedDoc = async (record: GeneratedDocumentRecord) => {
+    setGeneratedDocs(prev => {
+      const updated = [record, ...prev.filter(r => r.id !== record.id)];
+      saveGeneratedDocs(updated);
+      return updated;
+    });
+    if (currentUser) {
+      try {
+        await saveGeneratedDocToFirestore(currentUser.uid, record);
+      } catch (err) {
+        console.error('Failed to sync generated document log to Firestore:', err);
+      }
+    }
+  };
   // Employment Contracts Handlers
   const handleSaveContract = (contract: EmploymentContract) => {
     setEmploymentContracts(prev => {
@@ -1107,6 +1187,20 @@ export default function App() {
           onSaveContract={handleSaveContract}
           onDeleteContract={handleDeleteContract}
           onUpdateSettings={handleUpdateContractSettings}
+        />
+      )}
+
+      {currentTab === 'documents' && (
+        <DocumentLibraryView
+          templates={docTemplates}
+          employees={employees}
+          generatedDocs={generatedDocs}
+          contractSettings={contractSettings}
+          currentUserEmail={currentUser?.email || undefined}
+          preselect={docPreselect}
+          onSaveTemplate={handleSaveDocTemplate}
+          onDeleteTemplate={handleDeleteDocTemplate}
+          onRecordGenerated={handleRecordGeneratedDoc}
         />
       )}
 
@@ -1265,6 +1359,14 @@ export default function App() {
         onOpenQuickAttendanceForm={() => {
           setIsDetailModalOpen(false);
           setCurrentTab('attendance');
+        }}
+        docTemplates={docTemplates}
+        generatedDocs={generatedDocs}
+        contracts={employmentContracts}
+        onGenerateFromTemplate={(templateId, employeeId) => {
+          setDocPreselect({ templateId, employeeId });
+          setIsDetailModalOpen(false);
+          setCurrentTab('documents');
         }}
       />
 

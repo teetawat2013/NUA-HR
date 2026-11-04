@@ -72,6 +72,26 @@ service cloud.firestore {
         data.generatedAt is string && data.generatedAt.size() <= 64;
     }
 
+    // Document template validation (.docx เก็บเป็น base64 ต้องไม่เกินเพดานเอกสาร Firestore)
+    function isValidDocTemplate(data) {
+      return data.keys().hasAll(['id', 'userId', 'name', 'fileName', 'contentBase64']) &&
+        data.id is string && data.id.size() <= 64 &&
+        data.userId is string && data.userId.size() <= 128 &&
+        data.name is string && data.name.size() > 0 && data.name.size() <= 200 &&
+        data.fileName is string && data.fileName.size() <= 256 &&
+        data.contentBase64 is string && data.contentBase64.size() <= 950000;
+    }
+
+    // Generated document log validation
+    function isValidGeneratedDoc(data) {
+      return data.keys().hasAll(['id', 'userId', 'templateId', 'employeeId', 'generatedAt']) &&
+        data.id is string && data.id.size() <= 64 &&
+        data.userId is string && data.userId.size() <= 128 &&
+        data.templateId is string && data.templateId.size() <= 64 &&
+        data.employeeId is string && data.employeeId.size() <= 64 &&
+        data.generatedAt is string && data.generatedAt.size() <= 64;
+    }
+
     // Job application validation
     function isValidJobApplication(data) {
       return data.keys().hasAll(['id', 'fullName', 'position', 'appliedAt', 'status']) &&
@@ -126,6 +146,34 @@ service cloud.firestore {
           isValidId(recordId) &&
           incoming().userId == existing().userId &&
           isValidAttendanceRecord(incoming());
+        allow delete: if (isOwner(userId) || isAdmin()) && isValidId(recordId);
+      }
+
+      // Subcollection: document templates (คลังเอกสาร)
+      match /doc_templates/{templateId} {
+        allow get, list: if isOwner(userId) || isAdmin();
+        allow create: if (isOwner(userId) || isAdmin()) &&
+          isValidId(templateId) &&
+          incoming().userId == userId &&
+          isValidDocTemplate(incoming());
+        allow update: if (isOwner(userId) || isAdmin()) &&
+          isValidId(templateId) &&
+          incoming().userId == existing().userId &&
+          isValidDocTemplate(incoming());
+        allow delete: if (isOwner(userId) || isAdmin()) && isValidId(templateId);
+      }
+
+      // Subcollection: generated documents log
+      match /generated_documents/{recordId} {
+        allow get, list: if isOwner(userId) || isAdmin();
+        allow create: if (isOwner(userId) || isAdmin()) &&
+          isValidId(recordId) &&
+          incoming().userId == userId &&
+          isValidGeneratedDoc(incoming());
+        allow update: if (isOwner(userId) || isAdmin()) &&
+          isValidId(recordId) &&
+          incoming().userId == existing().userId &&
+          isValidGeneratedDoc(incoming());
         allow delete: if (isOwner(userId) || isAdmin()) && isValidId(recordId);
       }
 

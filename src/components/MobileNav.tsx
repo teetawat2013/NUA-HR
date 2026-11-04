@@ -9,7 +9,8 @@ import {
   UserMinus,
   CalendarDays,
   UserPlus,
-  FileSignature
+  FileSignature,
+  BookOpen
 } from 'lucide-react';
 import { NavTab } from './Sidebar';
 
@@ -53,6 +54,7 @@ export const MobileNav: React.FC<MobileNavProps> = ({
       label: 'สัญญาจ้าง', 
       icon: FileSignature,
     },
+    { id: 'documents' as NavTab, label: 'คลังเอกสาร', icon: BookOpen },
     { 
       id: 'recruitment' as NavTab, 
       label: 'รับสมัคร', 

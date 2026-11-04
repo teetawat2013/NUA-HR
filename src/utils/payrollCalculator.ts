@@ -1,11 +1,12 @@
 import { Employee, PayrollCalculation } from '../types';
+import { calculateSocialSecurity } from './socialSecurity';
 
 /**
  * คำนวณเงินเดือนตามมาตรฐานแรงงานไทย
  * - อัตราคิดต่อวัน: เงินเดือน / 30
  * - อัตราคิดต่อชั่วโมง: (เงินเดือน / 30) / 8
  * - OT อัตรา 1.5 เท่า
- * - กองทุนประกันสังคม (ม.33): 5% ของเงินเดือนฐาน (ฐานต่ำสุด 1,650 - สูงสุด 15,000 บาท) = ขั้นต่ำ 83 บาท, สูงสุด 750 บาท
+ * - กองทุนประกันสังคม (ม.33): 5% ของเงินเดือนฐาน ฐานต่ำสุด 1,650 และเพดานตามปี (ดู utils/socialSecurity.ts)
  * - เบี้ยขยัน: 1,000 บาท หากไม่มีขาด ไม่สาย ไม่ลา
  */
 export function calculateEmployeePayroll(
@@ -100,11 +101,8 @@ export function calculateEmployeePayroll(
     lateDeduction = (billableLateMinutes - 30) * 10;
   }
 
-  // 4. หักประกันสังคม (Social Security) 5% ฐานสูงสุด 15,000 = 750 บาท
-  let ssoBase = baseSalary;
-  if (ssoBase > 15000) ssoBase = 15000;
-  if (ssoBase < 1650) ssoBase = 1650;
-  const socialSecurity = Math.round(ssoBase * 0.05);
+  // 4. หักประกันสังคม (Social Security ม.33) 5% ฐาน 1,650 - เพดานตามปี (ปี 2569-2571 = 17,500 สูงสุด 875 บาท)
+  const socialSecurity = calculateSocialSecurity(baseSalary, year).employee;
 
   // 5. ภาษีหัก ณ ที่จ่าย (ประมาณการ)
   let taxWithheld = 0;

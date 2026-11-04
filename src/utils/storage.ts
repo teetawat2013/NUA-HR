@@ -13,7 +13,9 @@ import {
   DEFAULT_CONTRACT_SETTINGS,
   CompensatoryHolidayRecord,
   PartTimeDayLog,
-  PartTimeWeeklyOffConfig
+  PartTimeWeeklyOffConfig,
+  DocTemplate,
+  GeneratedDocumentRecord
 } from '../types';
 import { INITIAL_EMPLOYEES, INITIAL_LEAVE_REQUESTS } from '../data/initialData';
 import { DEFAULT_COMPANY_EVENTS } from '../data/holidaysAndEvents';
@@ -29,6 +31,8 @@ const JOB_SETTINGS_STORAGE_KEY = 'hrm_pro_job_settings_v1';
 const CONTRACTS_STORAGE_KEY = 'hrm_pro_contracts_v1';
 const CONTRACT_SETTINGS_STORAGE_KEY = 'hrm_pro_contract_settings_v1';
 const COMPENSATORY_RECORDS_STORAGE_KEY = 'hrm_pro_compensatory_records_v1';
+const DOC_TEMPLATES_STORAGE_KEY = 'hrm_pro_doc_templates_v1';
+const GENERATED_DOCS_STORAGE_KEY = 'hrm_pro_generated_docs_v1';
 
 export const DEMO_EMPLOYEE_IDS = ['EMP-001', 'EMP-002', 'EMP-003', 'EMP-004', 'EMP-005', 'EMP-006'];
 export const DEMO_ATTENDANCE_IDS = ['ATT-001', 'ATT-002', 'ATT-003', 'ATT-004', 'ATT-005', 'ATT-006', 'ATT-007', 'ATT-008'];
@@ -320,6 +324,50 @@ export function saveContractSettings(settings: ContractSettings): void {
     localStorage.setItem(CONTRACT_SETTINGS_STORAGE_KEY, JSON.stringify(settings));
   } catch (e) {
     console.error('Failed to save contract settings to localStorage', e);
+  }
+}
+
+// ===== คลังเอกสาร: เทมเพลต .docx และประวัติการสร้างเอกสาร =====
+export function loadDocTemplates(): DocTemplate[] {
+  try {
+    const raw = localStorage.getItem(DOC_TEMPLATES_STORAGE_KEY);
+    if (!raw) return [];
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed) ? parsed : [];
+  } catch (e) {
+    console.error('Failed to load document templates from localStorage', e);
+    return [];
+  }
+}
+
+/** คืน false ถ้าบันทึกไม่สำเร็จ (เช่น พื้นที่ localStorage เต็ม) เพื่อให้หน้าจอแจ้งผู้ใช้ได้ */
+export function saveDocTemplates(templates: DocTemplate[]): boolean {
+  try {
+    localStorage.setItem(DOC_TEMPLATES_STORAGE_KEY, JSON.stringify(templates));
+    return true;
+  } catch (e) {
+    console.error('Failed to save document templates to localStorage', e);
+    return false;
+  }
+}
+
+export function loadGeneratedDocs(): GeneratedDocumentRecord[] {
+  try {
+    const raw = localStorage.getItem(GENERATED_DOCS_STORAGE_KEY);
+    if (!raw) return [];
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed) ? parsed : [];
+  } catch (e) {
+    console.error('Failed to load generated documents from localStorage', e);
+    return [];
+  }
+}
+
+export function saveGeneratedDocs(records: GeneratedDocumentRecord[]): void {
+  try {
+    localStorage.setItem(GENERATED_DOCS_STORAGE_KEY, JSON.stringify(records));
+  } catch (e) {
+    console.error('Failed to save generated documents to localStorage', e);
   }
 }
 
