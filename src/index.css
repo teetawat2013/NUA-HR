@@ -1,0 +1,102 @@
+@import url('https://fonts.googleapis.com/css2?family=Anuphan:wght@100..700&display=swap');
+@import "tailwindcss";
+
+@theme {
+  --font-sans: 'Anuphan', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --font-mono: 'Anuphan', monospace;
+  
+  --color-nua-crimson: #8B1C2D;
+  --color-nua-crimson-dark: #66121F;
+  --color-nua-crimson-light: #A8283C;
+  --color-nua-cream: #F0E7C2;
+  --color-nua-cream-light: #FBF8EE;
+  --color-nua-cream-dark: #E2D39E;
+}
+
+@layer base {
+  *, ::before, ::after {
+    font-family: 'Anuphan', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+  html, body {
+    font-family: 'Anuphan', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
+    background-color: #fbf9f4;
+    color: #1e1315;
+  }
+  input, button, select, textarea, optgroup, option {
+    font-family: 'Anuphan', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
+  }
+  /* Ensure SVG text elements in charts and diagrams also use Anuphan */
+  svg text, text, .recharts-text, .recharts-legend-item-text, .recharts-default-tooltip {
+    font-family: 'Anuphan', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
+  }
+}
+
+/* Ensure tabular alignment for numbers/IDs while keeping identical font */
+.font-mono {
+  font-family: 'Anuphan', monospace !important;
+  font-feature-settings: 'tnum' on, 'lnum' on;
+}
+
+/* SweetAlert2 Styling with Nua HRM Pro Theme */
+.swal2-popup {
+  font-family: 'Anuphan', sans-serif !important;
+  border-radius: 1.5rem !important;
+  padding: 1.75rem !important;
+  box-shadow: 0 25px 50px -12px rgba(139, 28, 45, 0.25) !important;
+  border: 1px solid #F0E7C2 !important;
+}
+.swal2-title {
+  font-family: 'Anuphan', sans-serif !important;
+  font-weight: 800 !important;
+  color: #4a0e16 !important;
+}
+.swal2-html-container {
+  font-family: 'Anuphan', sans-serif !important;
+  color: #4b3832 !important;
+  font-size: 0.95rem !important;
+}
+.swal2-confirm {
+  background-color: #8B1C2D !important;
+  border-radius: 0.875rem !important;
+  font-weight: 700 !important;
+  padding: 0.65rem 1.75rem !important;
+  box-shadow: 0 4px 12px rgba(139, 28, 45, 0.3) !important;
+}
+.swal2-cancel {
+  background-color: #f1f5f9 !important;
+  color: #475569 !important;
+  border-radius: 0.875rem !important;
+  font-weight: 600 !important;
+  padding: 0.65rem 1.5rem !important;
+}
+
+/* Elegant Slim Scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: #d8cba4;
+  border-radius: 9999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #8B1C2D;
+}
+
+@media print {
+  *, body {
+    font-family: 'Anuphan', system-ui, -apple-system, sans-serif !important;
+    background-color: white !important;
+  }
+  .no-print {
+    display: none !important;
+  }
+  .print-only {
+    display: block !important;
+  }
+}

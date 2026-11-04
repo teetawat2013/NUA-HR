@@ -1,0 +1,6 @@
+{
+  "name": "Nua HRM Pro",
+  "description": "Nua HRM Pro - ระบบบริหารจัดการงานบุคคล สัญญาจ้าง สรุปเงินเดือน และตารางขาดลามาสาย คำนวณวันลา วันหยุด และวันหยุดชดเชย",
+  "requestFramePermissions": ["camera"],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
